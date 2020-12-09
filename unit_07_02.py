@@ -683,18 +683,17 @@ setup()
 
 def get_num_bags(source_bag,bag_chain=None,level=1):
 
-    if bag_chain is None:
-        bag_chain=[(0,shiny_gold_bag)]
+   total = 0
 
-    if not source_bag.has_children:
-        return 0
+   for bag in source_bag.children():
+       total+=get_sub_bags(bag)
 
-    for child in source_bag.children:
-        bag_chain.append((level,child))
 
-        get_num_bags(child,bag_chain,level+1)
+def get_sub_bags(bag):
+    total = bag.num_bags
 
-    return bag_chain
+    for b in bag.children():
+        pass
 
 
 # define the shiny gold bag bag
