@@ -598,11 +598,6 @@ import re
 
 class Bag:
     '''A class that represent a bag, it has a dictionary with other Bags as its keys and the numeric capacity is the key'''
-    def __repr__(self):
-        return f"{self.name} bag"
-
-    def __str__(self):
-        return self.name
 
     def __init__(self,name,capacity=None):
         self.name = name
@@ -610,8 +605,29 @@ class Bag:
         if capacity is None:
             self.can_hold_bags = {}
 
-    def get_children(self):
-        return [k for k,v in self.can_hold_bags.items() if v>0]
+    def __repr__(self):
+        return f"{self.name} bag"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def children(self):
+        return list(self.can_hold_bags.keys())
+
+    @property
+    def has_children(self):
+        return len(self.children)>0
+
+    @property
+    def num_bags(self):
+        return sum(self.can_hold_bags.values())
+
+    def get_children_recursively(self):
+        '''Returns the number of child bags including the children of those children'''
+        pass
+
+
 
 def format_capacity(string):
     outputs = []
@@ -629,69 +645,86 @@ def get_bags_that_can_contain_bag(bag_to_contain:Bag)->list:
     return can_hold_bag_bags
 
 
-def get_bags_contained_in_source_bag(source_bags:list,previous_bags_in_chain=None, level_down=0):
-    '''Returns the number of bags that can be contained in that bag'''
-    global total_held
-    if previous_bags_in_chain is None:
-        previous_bags_in_chain=[]
 
-    level_down+=1
-    for b in source_bags:
-        print(f'{"-----"*(level_down - 1)} {b.name} contains {len(b.can_hold_bags)} bags {b.can_hold_bags}')
+def setup(rules=rules):
+    '''Convert rules to a dict of Bag objects'''
+    # format rules
+    rules = rules.replace('bags','')
+    rules = rules.replace('bag','')
+    rules = rules.replace('.','')
+    rules = rules.split('\n')
 
-        if len(b.can_hold_bags)==0:
+    # make Bag classes with the name only
+    for line in rules:
+        bag,capacity = line.split('contain')
+        bag=bag.strip()
+        new_bag = Bag(name=bag)
+        all_bags[bag] = new_bag
 
-            previous_bags_in_chain.append(b)
-            for bag in previous_bags_in_chain:
-                print(bag)
+    # fill in capacity of bags
+    for line in rules:
+        if 'no other' in line:
+            continue
+        bag_to_modify ,capacity = line.split('contain')
 
+        capacities = format_capacity(capacity)
 
-        else:
-            previous_bags_in_chain.append(b)
-            print(f'{"-----"*(level_down - 1)} Examining {b.can_hold_bags}')
-            print(f'{"-----"*(level_down - 1)} {previous_bags_in_chain}')
-            get_bags_contained_in_source_bag(b.can_hold_bags,previous_bags_in_chain, level_down)
+        bag_capacity = {}
+        for n,bag_name in capacities:
+            bag = all_bags[bag_name]
+            bag_capacity[bag] = n
 
-    return previous_bags_in_chain
-# SETUP
-
-# format rules
-rules = rules.replace('bags','')
-rules = rules.replace('bag','')
-rules = rules.replace('.','')
-rules = rules.split('\n')
+        bag_to_modify = all_bags[bag_to_modify.strip()]
+        bag_to_modify.can_hold_bags = bag_capacity
 
 all_bags = {}
 
-# make Bag classes with the name only
-for line in rules:
-    bag,capacity = line.split('contain')
-    bag=bag.strip()
-    new_bag = Bag(name=bag)
-    all_bags[bag] = new_bag
+setup()
 
-# fill in capacity of bags
-for line in rules:
-    if 'no other' in line:
-        continue
-    bag_to_modify ,capacity = line.split('contain')
+def get_num_bags(source_bag,bag_chain=None,level=1):
 
-    capacities = format_capacity(capacity)
+    if bag_chain is None:
+        bag_chain=[(0,shiny_gold_bag)]
 
-    bag_capacity = {}
-    for n,bag_name in capacities:
-        bag = all_bags[bag_name]
-        bag_capacity[bag] = n
+    if not source_bag.has_children:
+        return 0
 
-    bag_to_modify = all_bags[bag_to_modify.strip()]
-    bag_to_modify.can_hold_bags = bag_capacity
+    for child in source_bag.children:
+        bag_chain.append((level,child))
+
+        get_num_bags(child,bag_chain,level+1)
+
+    return bag_chain
+
 
 # define the shiny gold bag bag
 shiny_gold_bag = all_bags['shiny gold']
+print(shiny_gold_bag.num_bags)
+
+bag_chain = get_num_bags(shiny_gold_bag)
+
+
+
+branches = []
+tmp = []
+
+
+grand_total = 0
+
+for level,b in reversed(bag_chain[1:]):
+    tmp.append((level,b))
+    if level==1:
+
+        numbers = []
+        for level,t in reversed(tmp):
+            numbers.append(t.num_bags)
+
+
+
 # globally accessible list of total bags
 total_held = []
 
 
-bags = get_bags_contained_in_source_bag([shiny_gold_bag])
+
 
 print(total_held)
