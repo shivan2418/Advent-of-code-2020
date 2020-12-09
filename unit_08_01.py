@@ -650,12 +650,10 @@ acc = 0
 
 def execute_command(index):
     global acc
-    if index==len(commands)+1:
-        return True
     c = commands[index]
 
     if index in executed_commands:
-        print(f'Prevent infiite: {acc}')
+        print(f'Prevent infinite loop: {acc}')
         return False
     else:
         executed_commands.append(index)

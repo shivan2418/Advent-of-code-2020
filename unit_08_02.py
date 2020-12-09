@@ -637,35 +637,83 @@ acc +15
 jmp +1'''
 
 
-def parse_command(command):
+def parse_command(command) -> tuple:
     command,value = command.split(' ')
     return (command,int(value))
 
-commands = code.split('\n')
-commands = [parse_command(c) for c in commands]
 
+def execute_command(index,commands=None, acc=0, previous_commands=None, return_previous_commands=False):
+    if previous_commands is None:
+        previous_commands = []
 
-executed_commands = []
-acc = 0
+    if commands is None:
+        commands = global_commands
 
-def execute_command(index):
-    global acc
-    if index==len(commands)+1:
-        return True
+    if index == len(commands):
+        if return_previous_commands:
+            return previous_commands
+        else:
+            print(f'End naturally, {acc}')
+            return True
+
     c = commands[index]
 
-    if index in executed_commands:
-        print(f'Prevent infiite: {acc}')
-        return False
+    if index in previous_commands:
+        print(f'Prevent infinite: {acc}')
+        if return_previous_commands:
+            return previous_commands
+        else:
+            return False
     else:
-        executed_commands.append(index)
+        previous_commands.append(index)
 
     command,value = c
     if command =='acc':
-        acc+=value
+        acc += value
     if command in ['acc','nop']:
-        execute_command(index+1)
+        return execute_command(index+1,commands,acc,previous_commands,return_previous_commands)
     elif command=='jmp':
-        execute_command(index+value)
+        return execute_command(index+value,commands, acc,previous_commands,return_previous_commands)
 
-execute_command(0)
+
+def get_index_of_command(c):
+    '''returns the index of a given command'''
+    return global_commands.index(c)
+
+def find_ending_commands():
+    commands_visited_by_infite_loop = execute_command(0,None, 0, None,True)
+    all_commands = {n for n in range(len(global_commands)) if n not in commands_visited_by_infite_loop}
+
+    ends_naturally = [execute_command(c,return_previous_commands=True) for c in all_commands if execute_command(c)]
+    ends_naturally.sort(key=lambda x:len(x))
+
+    commands_that_lead_to_ending_chain = ends_naturally[-1]
+    commands_before_ending_commands = [c - 1 for c in commands_that_lead_to_ending_chain]
+    jmp_or_nop_commands_before_ending_commands = [global_commands[i] for i in commands_before_ending_commands if global_commands[i][0] in ['jmp','nop']]
+
+    original_commands = global_commands.copy()
+
+    # try the various commands on the shortlist
+    for c in jmp_or_nop_commands_before_ending_commands:
+        modified_commands = original_commands.copy()
+        index_of_command = original_commands.index(c)
+
+         # flip the command
+        cmd, val = c
+        if cmd=='jmp':
+            cmd='nop'
+        else:
+            cmd='jmp'
+        c = (cmd,val)
+        modified_commands[index_of_command] = c
+
+        if execute_command(index=0,commands=modified_commands,acc=0,return_previous_commands=False,previous_commands=None):
+            print('Found answer')
+            break
+
+
+
+global_commands = code.split('\n')
+global_commands = [parse_command(c) for c in global_commands]
+
+find_ending_commands()
