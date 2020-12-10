@@ -92,15 +92,67 @@ sample = '''47
 103
 16'''
 
-sample = sample.split('\n')
-sample = [int(n) for n in sample]
-sample.insert(0,0)
-sample.sort()
-diffs={1:0,3:1}
-for s0,s1 in zip(sample,sample[1:]):
-    d = s1-s0
-    diffs[d]+=1
+small_sample = '''16
+10
+15
+5
+1
+11
+7
+19
+6
+12
+4'''
+
+from itertools import combinations
+
+def format_sample(sample):
+    '''returns the sample as a sorted with 0 and end+3'''
+
+    sample = sample.split('\n')
+    sample = [int(n) for n in sample]
+    sample.insert(0,0)
+    sample.sort()
+    sample.append(sample[-1]+3)
+    return sample
+
+def get_permutations(nums,must_start_with,must_end_with):
+    coms = []
+    for i in range(len(nums)):
+        coms.extend(list(combinations(nums, i + 1)))
 
 
-print(diffs[1]*diffs[3])
+    coms = [c for c in coms if c[-1]==must_end_with and c[0]==must_start_with]
+    return coms
 
+small_sample = format_sample(small_sample)
+
+
+clusters = []
+
+tmp = []
+for s0,s1 in zip(small_sample,small_sample[1:]):
+    diff = s1-s0
+    if diff==1:
+        tmp.append(s0)
+    elif diff==3:
+        tmp.append(s0)
+        clusters.append(tmp)
+        tmp=[]
+    else:
+        raise("Som ting wong")
+
+
+total_coms = []
+for cluster0,cluster1 in zip(clusters,clusters[1:]):
+    total_coms.append(get_permutations(cluster0,must_start_with=cluster0[0],must_end_with=cluster1[0]-3))
+
+
+possible_coms= 0
+calc_nums = []
+for com_list in total_coms:
+    calc_nums.append(len(com_list))
+
+import math
+print(calc_nums)
+print(math.product(calc_nums))
