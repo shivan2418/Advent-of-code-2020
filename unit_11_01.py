@@ -162,15 +162,6 @@ class Seat:
         return ad_seats
 
     @classmethod
-    def get_seat_at_pos(cls,x,y):
-        try:
-            return Seat.seats[x][y]
-        except IndexError:
-            return None
-        except KeyError:
-            return None
-
-    @classmethod
     def get_total_num_occupied_seats(cls):
         return len([s for s in Seat.all_seats if s.status=='#'])
 
@@ -200,6 +191,10 @@ class Seat:
 
         for seat in cls.all_seats:
             seat.apply_status_change()
+
+
+import time
+t0 = time.time()
 
 x_rows = big_sample.split('\n')
 
@@ -234,3 +229,7 @@ while True:
         Seat.print_overview_map()
         print(Seat.get_total_num_occupied_seats())
         break
+
+t1 = time.time()
+
+print(t1-t0)
