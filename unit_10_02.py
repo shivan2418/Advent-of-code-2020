@@ -1,4 +1,4 @@
-sample = '''47
+full_sample = '''47
 99
 115
 65
@@ -136,9 +136,8 @@ medium_sample= '''28
 10
 3'''
 
-from itertools import combinations,zip_longest
+from itertools import combinations
 import math
-
 
 def format_sample(sample):
     '''returns the sample as a sorted with 0 and end+3'''
@@ -150,69 +149,73 @@ def format_sample(sample):
     sample.append(sample[-1]+3)
     return sample
 
-def get_permutations(nums,must_start_with,must_end_with):
-    coms = []
-    for i in range(len(nums)):
-        coms.extend(list(combinations(nums, i + 1)))
+def get_clusters(sample):
+    if isinstance(sample,str):
+        sample = format_sample(sample)
 
-    coms = [c for c in coms if c[-1]==must_end_with and c[0]==must_start_with]
-    return coms
-
-
-
-def get_combination_with_restrictions(cluster, must_start_with, must_end_with):
-    coms = []
-    combination_length = [n for n in range(1,len(cluster)+1)]
-
-    for length in combination_length:
-        com = combinations(cluster,length)
-        com = [c for c in com if c[0]==must_start_with and c[-1]==must_end_with]
-        coms.extend(com)
-    return coms
-
-def get_combinations_of_combinations(coms1,coms2):
-
-    all_coms =[]
-    for c in coms1:
-        both = [c,*coms2]
-        coms = list(combinations(both,2))
-        coms = [c for c in coms if c[0]==coms1[0]]
-        all_coms.extend(coms)
-    return all_coms
-
-
-def get_total_number_of_permutations(raw_sample):
-    sample = format_sample(raw_sample)
     clusters = []
     tmp = []
-
-    for s0,s1 in zip(sample,sample[1:]):
-        diff = s1-s0
-        if diff==1:
+    for s0, s1 in zip(sample,sample[1:]):
+        diff = s1 - s0
+        if diff == 1:
             tmp.append(s0)
-        elif diff==3:
+        elif diff == 3:
             tmp.append(s0)
             clusters.append(tmp)
-            tmp=[]
+            tmp = []
         else:
-            raise("Som ting wong")
+            raise("Sum ting wong")
     clusters.append([sample[-1]])
 
-    total_coms = []
-    for prev_c,next_c in zip(clusters,clusters[1:]):
-        total_coms.append(get_permutations(prev_c,must_start_with=prev_c[0],must_end_with=next_c[0]-3))
+    return clusters
 
+def get_combinations_with_restrictions(cluster,require_start,require_end):
 
+    unfiltered_combinations = []
+    combination_lengths = [n+1 for n in range(len(cluster)) if n+1>=2] # for each length, but min 2
+    if combination_lengths == []:
+        return cluster
+    for l in combination_lengths:
+        coms = combinations(cluster,l)
+        unfiltered_combinations.extend(list(coms))
+
+    # must start and with a joltage that can connect either end
+    filtered_combinations = [c for c in unfiltered_combinations if c[0]==require_start and c[-1]==require_end]
+    # filter away if it makes too big a jump internally
+    filtered_combinations = [c for c in filtered_combinations if c[0]+3 >=c[1]]
+
+    return filtered_combinations
+
+def get_valid_combinations(clusters):
     all_coms = []
-    for this_cluster,next_cluster in zip(clusters,clusters[1:]):
-        all_coms.append(get_combination_with_restrictions(this_cluster, must_start_with=this_cluster[0], must_end_with=next_cluster[0] - 3))
+    for index in range(1,len(clusters)):
+        prev_c = clusters[index-1]
+        this_c = clusters[index]
+        try:
+            next_c = clusters[index+1]
+        except IndexError:
+            all_coms.extend([next_c])
+            break
 
-    coms_of_coms = []
-    for ac1,ac2 in zip(all_coms,all_coms[1:]):
-        if len(ac1)==2:
-            continue
-        coms_of_coms.append(get_combinations_of_combinations(ac1,ac2))
-    print(coms_of_coms)
+        require_start = prev_c[-1]+3
+        require_end = next_c[0]-3
+        all_coms.append(get_combinations_with_restrictions(this_c,require_start,require_end))
 
-get_total_number_of_permutations(small_sample)
-get_total_number_of_permutations(medium_sample)
+    # ad hoc add the first element
+    first_element = get_combinations_with_restrictions(clusters[0],require_start=0,require_end=clusters[1][0]-3)
+    all_coms.insert(0,first_element)
+
+    # get the length of each of the combinations
+    all_coms_length = [len(c) for c in all_coms]
+    # the number of possible ways is the product of all the ways to arrange the combinations.
+    print(math.prod(all_coms_length))
+    return all_coms
+
+clusters = get_clusters(small_sample)
+get_valid_combinations(clusters)
+
+clusters = get_clusters(medium_sample)
+get_valid_combinations(clusters)
+
+clusters = get_clusters(full_sample)
+get_valid_combinations(clusters)
