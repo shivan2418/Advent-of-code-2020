@@ -148,6 +148,7 @@ class Seat:
             self.status = self.pending_status_change
             self.pending_status_change=None
 
+    @lru_cache()
     def get_adjacent_seats(self):
         adjacent_positions = [(-1,1),(0,1),(1,1),(-1,0),(1,0),(-1,-1),(0,-1),(1,-1)]
         possible_adjacent = [(self.x+x,self.y+y) for x,y in adjacent_positions]
@@ -168,6 +169,11 @@ class Seat:
             return None
         except KeyError:
             return None
+
+    @classmethod
+    def get_total_num_occupied_seats(cls):
+        return len([s for s in Seat.all_seats if s.status=='#'])
+
 
     def get_num_occupied_adjacent_seats(self):
         ad_seats = self.get_adjacent_seats()
@@ -195,7 +201,7 @@ class Seat:
         for seat in cls.all_seats:
             seat.apply_status_change()
 
-x_rows = small_sample.split('\n')
+x_rows = big_sample.split('\n')
 
 # setup
 for y, col in enumerate(x_rows):
@@ -203,19 +209,7 @@ for y, col in enumerate(x_rows):
         s = Seat(x, y, status)
         Seat.all_seats.append(s)
         Seat.all_seats_dict[s.pos]=s
-
-
-# test adjacent function
-
-for s in Seat.all_seats:
-    s.status='X'
-    for s in s.get_adjacent_seats():
-        s.status='?'
-    Seat.print_overview_map()
-
-    s.status='_'
-    for s in s.get_adjacent_seats():
-        s.status='_'
+        print(s.pos)
 
 
 counter=0
@@ -226,20 +220,17 @@ round_maps[counter]=Seat.overview_map()
 Seat.run_round()
 Seat.print_overview_map()
 
-
-
 counter+=1
 Seat.run_round()
 Seat.print_overview_map()
-
 round_maps[counter]=Seat.overview_map()
-#
-#
-# while True:
-#     counter += 1
-#     Seat.run_round()
-#     round_maps[counter] = Seat.overview_map()
-#
-#     if round_maps[counter]==round_maps[counter-1]:
-#         Seat.print_overview_map()
-#         break
+
+while True:
+    counter += 1
+    Seat.run_round()
+    round_maps[counter] = Seat.overview_map()
+
+    if round_maps[counter]==round_maps[counter-1]:
+        Seat.print_overview_map()
+        print(Seat.get_total_num_occupied_seats())
+        break
