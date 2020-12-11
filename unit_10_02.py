@@ -104,7 +104,41 @@ small_sample = '''16
 12
 4'''
 
-from itertools import combinations
+medium_sample= '''28
+33
+18
+42
+31
+14
+46
+20
+48
+47
+24
+23
+49
+45
+19
+38
+39
+11
+1
+32
+25
+35
+8
+17
+7
+9
+4
+2
+34
+10
+3'''
+
+from itertools import combinations,zip_longest
+import math
+
 
 def format_sample(sample):
     '''returns the sample as a sorted with 0 and end+3'''
@@ -121,38 +155,64 @@ def get_permutations(nums,must_start_with,must_end_with):
     for i in range(len(nums)):
         coms.extend(list(combinations(nums, i + 1)))
 
-
     coms = [c for c in coms if c[-1]==must_end_with and c[0]==must_start_with]
     return coms
 
-small_sample = format_sample(small_sample)
 
 
-clusters = []
+def get_combination_with_restrictions(cluster, must_start_with, must_end_with):
+    coms = []
+    combination_length = [n for n in range(1,len(cluster)+1)]
 
-tmp = []
-for s0,s1 in zip(small_sample,small_sample[1:]):
-    diff = s1-s0
-    if diff==1:
-        tmp.append(s0)
-    elif diff==3:
-        tmp.append(s0)
-        clusters.append(tmp)
-        tmp=[]
-    else:
-        raise("Som ting wong")
+    for length in combination_length:
+        com = combinations(cluster,length)
+        com = [c for c in com if c[0]==must_start_with and c[-1]==must_end_with]
+        coms.extend(com)
+    return coms
+
+def get_combinations_of_combinations(coms1,coms2):
+
+    all_coms =[]
+    for c in coms1:
+        both = [c,*coms2]
+        coms = list(combinations(both,2))
+        coms = [c for c in coms if c[0]==coms1[0]]
+        all_coms.extend(coms)
+    return all_coms
 
 
-total_coms = []
-for cluster0,cluster1 in zip(clusters,clusters[1:]):
-    total_coms.append(get_permutations(cluster0,must_start_with=cluster0[0],must_end_with=cluster1[0]-3))
+def get_total_number_of_permutations(raw_sample):
+    sample = format_sample(raw_sample)
+    clusters = []
+    tmp = []
+
+    for s0,s1 in zip(sample,sample[1:]):
+        diff = s1-s0
+        if diff==1:
+            tmp.append(s0)
+        elif diff==3:
+            tmp.append(s0)
+            clusters.append(tmp)
+            tmp=[]
+        else:
+            raise("Som ting wong")
+    clusters.append([sample[-1]])
+
+    total_coms = []
+    for prev_c,next_c in zip(clusters,clusters[1:]):
+        total_coms.append(get_permutations(prev_c,must_start_with=prev_c[0],must_end_with=next_c[0]-3))
 
 
-possible_coms= 0
-calc_nums = []
-for com_list in total_coms:
-    calc_nums.append(len(com_list))
+    all_coms = []
+    for this_cluster,next_cluster in zip(clusters,clusters[1:]):
+        all_coms.append(get_combination_with_restrictions(this_cluster, must_start_with=this_cluster[0], must_end_with=next_cluster[0] - 3))
 
-import math
-print(calc_nums)
-print(math.product(calc_nums))
+    coms_of_coms = []
+    for ac1,ac2 in zip(all_coms,all_coms[1:]):
+        if len(ac1)==2:
+            continue
+        coms_of_coms.append(get_combinations_of_combinations(ac1,ac2))
+    print(coms_of_coms)
+
+get_total_number_of_permutations(small_sample)
+get_total_number_of_permutations(medium_sample)
