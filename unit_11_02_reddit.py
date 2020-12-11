@@ -50,10 +50,7 @@ class Seat:
             self.status = self.pending_status_change
             self.pending_status_change=None
 
-
-    @lru_cache(maxsize=12)
     def get_visible_seats(self):
-
         if self.seats_visible_in_direction is None:
             # the eight directions
             line_slopes = [(-1,1),(0,1),(1,1),(-1,0),(1,0),(-1,-1),(0,-1),(1,-1)]
@@ -82,21 +79,6 @@ class Seat:
             return seats_visible_in_direction
         else:
             return self.seats_visible_in_direction
-
-
-    @lru_cache()
-    def get_adjacent_seats(self):
-        adjacent_positions = [(-1,1),(0,1),(1,1),(-1,0),(1,0),(-1,-1),(0,-1),(1,-1)]
-        possible_adjacent = [(self.x+x,self.y+y) for x,y in adjacent_positions]
-        ad_seats = []
-        for pos in possible_adjacent:
-            try:
-                s = Seat.all_seats_dict[pos]
-                ad_seats.append(s)
-            except KeyError:
-                pass
-        return ad_seats
-
 
     def get_first_visible_seats(self):
         directions = [(-1,1),(0,1),(1,1),(-1,0),(1,0),(-1,-1),(0,-1),(1,-1)]
@@ -136,24 +118,6 @@ class Seat:
     def get_total_num_occupied_seats(cls):
         return len([s for s in Seat.all_seats if s.status=='#'])
 
-
-    def get_num_occupied_adjacent_seats(self):
-        ad_seats = self.get_adjacent_seats()
-        occupied_seats = [s.status for s in ad_seats].count('#')
-        return occupied_seats
-
-    def get_status_change(self):
-        if self.status=='.': # floor never changes
-            return None
-        adjacent_occupied = self.get_num_occupied_adjacent_seats()
-
-        if self.status=='L':
-            if adjacent_occupied==0:
-                return '#'
-        elif self.status=='#':
-            if adjacent_occupied>=4:
-                return 'L'
-
     def get_status_change_visible(self):
         if self.status == '.':  # floor never changes
             return None
@@ -167,15 +131,6 @@ class Seat:
                 return 'L'
 
         return None
-
-    @classmethod
-    def run_round(cls):
-        # get if anything will change on any of the seats
-        for seat in cls.all_seats:
-            seat.pending_status_change = seat.get_status_change()
-
-        for seat in cls.all_seats:
-            seat.apply_status_change()
 
     @classmethod
     def run_round_visible(cls):
