@@ -15,22 +15,23 @@ def get_nth_number_spoken(starting_nums, until_round=2020):
     if isinstance(starting_nums,str):
         starting_nums = starting_nums.split(',')
 
-    rounds_numbers_appeared = {}
+    last_number_spoken_in_round = {}
     round = 1
     for n in starting_nums[:-1]:
-        rounds_numbers_appeared[n] = [round]
+        last_number_spoken_in_round[n] = round
         round += 1
     most_recently_spoken_number = starting_nums[-1]
-    while round != until_round:
+    for round in range(round,until_round):
         # not spoken before:
-        if most_recently_spoken_number not in rounds_numbers_appeared:
-            rounds_numbers_appeared[most_recently_spoken_number]=[round]
+        if most_recently_spoken_number not in last_number_spoken_in_round:
+            last_number_spoken_in_round[most_recently_spoken_number]=round
             most_recently_spoken_number = 0
         else:
             # spoken before:
-            rounds_numbers_appeared[most_recently_spoken_number].append(round)
-            most_recently_spoken_number = rounds_numbers_appeared[most_recently_spoken_number][-1] - rounds_numbers_appeared[most_recently_spoken_number][-2]
-        round+=1
+            last_spoken_in_round = last_number_spoken_in_round[most_recently_spoken_number]
+            last_number_spoken_in_round[most_recently_spoken_number] = round
+            most_recently_spoken_number = last_number_spoken_in_round[most_recently_spoken_number]-last_spoken_in_round
+
 
         #print(f"{round:3,}")
     return most_recently_spoken_number
