@@ -7,7 +7,7 @@ input = '''.#.
 '''
 
 def setup_matrix(input):
-    cube_matrix = keydefaultdict(newcube,{})
+    cube_matrix = {}
     z = 0
     input = input.split('\n')
 
@@ -30,6 +30,13 @@ class Cube:
     def pos(self):
         return (self.x,self.y,self.z)
 
+    @property
+    def value(self):
+        if self.active:
+            return '#'
+        else:
+            return '.'
+
     def _get_neighbour_coordinates(self):
         base = (self.x, self.y, self.z)
         coordinates = []
@@ -44,21 +51,26 @@ class Cube:
         coordinates = self._get_neighbour_coordinates()
         neighbours = []
         for cor in coordinates:
-            neighbours.append(Cube.matrix[cor])
+            try:
+                neighbour_cube = Cube.matrix[cor]
+            except KeyError:
+                # create a new cube and return that
+                neighbour_cube = Cube(*cor)
+            neighbours.append(neighbour_cube)
 
         return neighbours
 
     def get_num_active_neighbours(self):
         coordinates = self._get_neighbour_coordinates()
 
-        status=[]
+        status = []
 
         for cor in coordinates:
-            if cor not in Cube.matrix.keys():
+            try:
+                cube = Cube.matrix[cor]
+                status.append(cube.active)
+            except KeyError:
                 status.append(False)
-            else:
-                s = Cube.matrix[cor].active
-                status.append(s)
 
         return status.count(True)
 
@@ -77,18 +89,30 @@ class Cube:
             raise("Something wrong")
 
     @classmethod
+    def total_active(cls):
+        return [c.active for c in Cube.matrix.values()].count(True)
+
+    @classmethod
+    def expand_cube(cls,rounds):
+
+        for _ in range(rounds):
+            # make new cubes at the edges
+            neighbours = []
+            for cube in Cube.matrix.values():
+                c = cube.get_neighbours()
+                neighbours.extend(c)
+            for n in neighbours:
+                if n.pos not in Cube.matrix.keys():
+                    Cube.matrix[n.pos] = n
+
+            print(f'Total cubes: {len(Cube.matrix)}')
+
+    @classmethod
     def run_round(self):
 
-        # get all the neighbours,this add new cubes
-        neighbours = []
-
+        neighbours_coordinates=[]
         for cube in Cube.matrix.values():
-            neighbours.extend(cube.get_neighbours())
-
-        for n in neighbours:
-            if n.pos not in Cube.matrix.keys():
-                Cube.matrix[n.pos]=n
-
+            neighbours_coordinates.append(cube._get_neighbour_coordinates())
 
         pending_changes = {}
         for pos,cube in Cube.matrix.items():
@@ -97,8 +121,25 @@ class Cube:
         # keep only not none changes
         pending_changes = {k:v for k,v in pending_changes.items() if v is not None}
 
+        # apply the changes
         for pos,change in pending_changes.items():
             Cube.matrix[pos].active=change
+
+
+        Cube.print_map()
+
+    @classmethod
+    def print_map(self):
+        z_levels = {c.z for c in Cube.matrix.values()}
+        for z in sorted(list(z_levels)):
+            print(f"Z-level: {z}")
+            cubes_on_z_level = [c for c in Cube.matrix.values() if c.z == z]
+            y_levels = {c.y for c in cubes_on_z_level}
+            for y in y_levels:
+                cubes_on_y = [c for c in cubes_on_z_level if c.y==y]
+                cubes_on_y.sort(key=lambda c:c.x)
+                print(''.join([c.value for c in cubes_on_y]))
+
 
 
     def __str__(self):
@@ -115,16 +156,13 @@ class keydefaultdict(defaultdict):
             ret = self[key] = self.default_factory(key)
             return ret
 
-def newcube(xyz):
-    x,y,z = xyz
-    cube = Cube(x,y,z)
-    return cube
-
-
 Cube.matrix = setup_matrix(input)
+
+
+Cube.expand_cube(6)
 
 for round in range(6):
 
     Cube.run_round()
+print(Cube.total_active())
 
-print('a')
