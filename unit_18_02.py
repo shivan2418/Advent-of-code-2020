@@ -417,16 +417,19 @@ def calculate_value(expression):
         plus_pairs = r'[\d]+ \+ [\d]+'
         plus_expressions = re.findall(plus_pairs,expression)
 
+        replace_exp = {}
+
         for exp in plus_expressions:
-            expression = expression.replace(exp,str(calculate_simple(exp)))
+            replace_exp[exp] = str(calculate_simple(exp))
+
+        for old_exp,new_exp in replace_exp.items():
+            expression = expression.replace(old_exp,new_exp,1)
 
         return calculate_value(expression)
 
     else:
         # all + have been cleared, just process the rest of the expression as normal
         return eval(expression)
-        return calculate_simple(expression)
-
 
 def calculate_total(expression):
 
@@ -444,14 +447,13 @@ def calculate_total(expression):
     return calculate_total(expression)
 
 
-# assert calculate_total('1 + 2 * 3 + 4 * 5 + 6')==231
-# assert calculate_total('1 + (2 * 3) + (4 * (5 + 6))') == 51
-# assert calculate_total('2 * 3 + (4 * 5)')==46
-# assert calculate_total('5 + (8 * 3 + 9 + 3 * 4 * 3)')==1445
-# assert calculate_total('5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))')==669060
-# assert calculate_total('((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2')==23340
-a=calculate_total('((9 + 6 * 8 * 5) + 9 + 9 + 6 * 4 * 2) + (6 * 3 * 3 * 4 * 8) * (6 + (2 + 8) + 8 * 4 + (3 * 4 + 6 * 7 + 4 * 8)) * 8 * 8')
-print(a)
+assert calculate_total('1 + 2 * 3 + 4 * 5 + 6')==231
+assert calculate_total('1 + (2 * 3) + (4 * (5 + 6))') == 51
+assert calculate_total('2 * 3 + (4 * 5)')==46
+assert calculate_total('5 + (8 * 3 + 9 + 3 * 4 * 3)')==1445
+assert calculate_total('5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))')==669060
+assert calculate_total('((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2')==23340
+assert calculate_total('9 + 14 * 19 + 14') == 759
 subtotal = 0
 lines = full_input.split("\n")
 for line in lines:
