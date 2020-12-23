@@ -26,7 +26,7 @@ full_input = '''62: 93 93
 120: 98 127 | 108 40
 59: 40 111 | 127 34
 63: 65 40 | 65 127
-8: 42
+8: 42 | 42 8
 106: 44 40 | 50 127
 98: 127 48 | 40 13
 1: 36 127 | 74 40
@@ -43,7 +43,7 @@ full_input = '''62: 93 93
 19: 116 127 | 59 40
 90: 40 40 | 127 127
 75: 93 90
-11: 42 31
+11: 42 31 | 42 11 31
 20: 127 61 | 40 62
 16: 83 127 | 12 40
 33: 65 127 | 62 40
@@ -539,7 +539,9 @@ from string import ascii_lowercase
 def preparse_input(input_str):
     rules = []
     input = []
+
     input_list = rules
+
     for line in input_str.split('\n'):
         if line == "":
             input_list = input
@@ -556,7 +558,10 @@ def parse_rules(rules):
     return rules_dict
 
 def is_valid(input_str):
+
+
     rules_dict,input = preparse_input(input_str)
+
     must_conform_to_rules = re.findall(r'\d+',rules_dict.pop('0'))
 
     for key,value in rules_dict.items():
@@ -570,7 +575,9 @@ def is_valid(input_str):
             if rules_dict[num] in ascii_lowercase:
                 rules_dict[key] = rules_dict[key].replace(num, rules_dict[num])
 
+
     rules_dict = parse_rules_recursively(rules_dict)
+
 
     rule_to_apply = "".join([rules_dict[letter] for letter in must_conform_to_rules])
     rule_to_apply = f"^{rule_to_apply}$"
@@ -587,7 +594,10 @@ def is_valid(input_str):
 
 def parse_rules_recursively(rules_dict):
 
-    while any([l.isdigit() for l in "".join(rules_dict.values())]):
+
+    all_values = "".join(rules_dict.values())
+
+    while any([l.isdigit() for l in all_values]):
         # replace rules
         for key, value in rules_dict.items():
             individual_rules = re.findall(r"\b\d+\b", value)
@@ -595,6 +605,9 @@ def parse_rules_recursively(rules_dict):
                 pattern = f'(?<!\d){rule}(?!\d)'
                 value = re.sub(pattern,rules_dict[rule],value)
             rules_dict[key] = value
+
+        all_values = "".join(rules_dict.values())
+
     # remove all spaces
     for key,value in rules_dict.items():
         value = value.replace(' ','')
