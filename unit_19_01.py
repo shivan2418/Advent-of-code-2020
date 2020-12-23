@@ -563,10 +563,6 @@ def parse_rules(rules):
 
 
 def parse_rules_dict(rules_dict):
-    new_dict = {k:[] for k in rules_dict.keys()}
-    letter_dict = {k: v for k, v in rules_dict.items() if re.match(r'\D', v) is not None}
-
-    sub_dict={}
     # replace all numbers that match exactly to a letter with that letter
     for key in rules_dict.keys():
         all_nums = re.findall(r'\d',rules_dict[key])
@@ -574,55 +570,35 @@ def parse_rules_dict(rules_dict):
             if rules_dict[num] in ascii_lowercase:
                 rules_dict[key] = rules_dict[key].replace(num,rules_dict[num])
 
+    # enclose all letter things in ( ) and remove spaces
+    for key,value in rules_dict.items():
+        if value[0] in ascii_lowercase and "|" in value:
+            value = value.replace(" ","")
+            value = f"({value})"
+            rules_dict[key]=value
 
-    validity_condition = rules_dict.pop('0')
-    parsed_rules = []
-    for rule in re.findall(r'\d',validity_condition):
-        parsed_rules.append(parse_single_rule(rule,rules_dict))
+    for key,value in rules_dict.items():
+        if value[0].isdigit():
+            subrules = value.strip().split('|')
+            subrules = [[rules_dict[r] for r in re.findall(r"\d+", rule)] for rule in subrules]
+            rules_dict[key]=subrules
 
+    for key,value in rules_dict.items():
+        if isinstance(value,list):
+            new_value = []
+            for l in value:
+                new_value.append("".join(l))
+            rules_dict[key]=new_value
 
-    return new_dict
-
-def parse_single_rule(rule,rules_dict):
-    # guard against the rule just being one letter
-    if rules_dict[rule] in ascii_lowercase:
-        return rules_dict[rule]
-
-    rule_value = rules_dict[rule]
-    unique_cars = set(re.findall(r'\d',rule_value))
-    for char in unique_cars:
-
-        rule_value = rule_value.replace(char,rules_dict[char])
-
-
-    return rule_value
+    return rules_dict
 
 
 def line_is_valid(line,rules_dict):
     # make a generator out of the line
-    line = (l for l in line)
+    valid_rule = rules_dict.pop('0')
 
-
-    base_rule = rules_dict['0']
-    parsed_regex_rule = ""
-    valid_rules = []
-
-    # parse the base rule
-    for char in base_rule:
-        # not a rule
-        if not char.isdigit():
-            new_char = next(line)
-            if char != new_char:
-                return False
-        # rule
-        else:
-            rules = rules_dict[char]
-            for rule in rules:
-
-                for individual_rule in re.findall(r'\([a-z\|]+\)',rule):
-                    print(individual_rule)
-                    itertools.combinations()
-
+    valid_rule = [item for item in list(valid_rule) if item not in [" ",""]]
+    valid_regexes = itertools.combinations()
 
 
 
@@ -632,6 +608,8 @@ def line_is_valid(line,rules_dict):
 
 rules,input = parse_input(sample_input)
 rules_dict = parse_rules(rules)
+
+
 
 ok_lines = 0
 for line in input:
